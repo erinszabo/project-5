@@ -124,7 +124,7 @@
             function calc_times(control) {
               var control_dist = control.find("input[name='km']").val();
               var brevet_dist = $("#brevet_dist_km").val();
-              var brevet_start_time = $("#brevet_start_time").val();
+              var start_time = $("#brevet_start_time").val();
 
               var open_time_field = control.find("input[name='open']");
               var close_time_field = control.find("input[name='close']");
@@ -132,9 +132,9 @@
               // will need to check if I've set this up correctly
                
 
-               $.getJSON(TIME_CALC_URL, {control_dist: control_dist, brevet_dist: brevet_dist, brevet_start_time: brevet_start_time}).done(
+               $.getJSON(TIME_CALC_URL, {control_dist: control_dist, brevet_dist: brevet_dist, start_time: start_time}).done(
                  function(data) {
-                    // var times = data.result;
+                    var times = data.result;
                     console.log("Got a response: ");
                     console.log("Response.open = " + times.open);
                     // This part will automatically fill the open and close slots,
@@ -145,10 +145,19 @@
                     }
                ).fail(function(err){
                  // In case you get an error...
+                 notes_field.text("Something went wrong!")
                  console.log("Error!");
                  console.log(err);
                });
             }
+
+            function reset(control) {
+                  control.find("input[name='km']").val("");
+                  control.find("input[name='miles']").val("");
+                  control.find("input[name='open']").val("");
+                  control.find("input[name='close']").val("");
+                  control.find("td.notes").text("");
+               }
 
             $(document).ready(function(){
              // Do the following when the page is finished loading
@@ -157,6 +166,7 @@
             //     also need to keep calculating if a row changes probably. 
                $('input[name="miles"]').change(
                   function() {
+                     if (self.target.value.length !== 0) {
                       var miles = parseFloat($(this).val());
                       var km = (1.609344 * miles).toFixed(6) ;
                       console.log("Converted " + miles + " miles to " + km + " kilometers");
@@ -165,20 +175,44 @@
                       target.val( km );
                       // Then calculate times for this entry
                       calc_times(control_entry);
+                     }
+                     else {
+                        var control_entry = $(this).parents(".control");
+                        reset(control_entry);                     }
                    });
                $('input[name="km"]').change(
-                  function() {
-                      var km = parseFloat($(this).val());
-                      var miles = (0.621371 * km).toFixed(6) ;
-                      console.log("Converted " + km + " km to " + miles + " miles");
-                      var control_entry = $(this).parents(".control")
-                      var target = control_entry.find("input[name='miles']");
-                      target.val( miles );
-                      // Then calculate times for this entry
-                      calc_times(control_entry);
-                   });
+                  function(self) {
+                     if (self.target.value.length !== 0) {
+                        var km = parseFloat($(this).val());
+                        var miles = (0.621371 * km).toFixed(6) ;
+                        console.log("Converted " + km + " km to " + miles + " miles");
+                        var control_entry = $(this).parents(".control")
+                        var target = control_entry.find("input[name='miles']");
+                        target.val( miles );
+                        // Then calculate times for this entry
+                        calc_times(control_entry);
+                     }
+                     else {
+                        var control_entry = $(this).parents(".control");
+                        reset(control_entry);
+                     }
+               })
 
-                  });
+               function calc_new_times() {
+                     $(".control_time_table .control").each(function() {
+                        if ($(this).find("input[name='km']").val().length !== 0) {
+                           calc_times($(this));
+                        }
+                     });
+                }
+
+               $('select[name="distance"]').change(function() {
+                  calc_new_times()
+               });
+               $('input[name="begin_date"]').change(function() {
+                  calc_new_times()
+               });
+            });
          </script>
       </div>
    </body>
