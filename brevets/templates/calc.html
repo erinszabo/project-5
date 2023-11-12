@@ -37,8 +37,8 @@
             request to the server,
             they appear above the rest of the content, just until the next
             action.  (This is only on request/response transactions that
-            result in regenerating the page, not on every request.)
-            -->
+            result in regenerating the page, not on every request.)-->
+            
          {% with messages = get_flashed_messages() %}
          {% if messages %}
          <ul class="flashes">
@@ -48,6 +48,7 @@
          </ul>
          {% endif %}
          {% endwith %}
+         
          <!-- Design on bootstrap grid -->
          <div class="row">
             <div class="col-md-4">
@@ -123,18 +124,17 @@
 
             function calc_times(control) {
               var control_dist = control.find("input[name='km']").val();
-              var brevet_dist = $("#brevet_dist_km").val();
-              var start_time = $("#brevet_start_time").val();
+              var brevet_dist = $("select[name='distance']").val();
+              var start_time = $("input[name='begin_date']").val();
 
               var open_time_field = control.find("input[name='open']");
               var close_time_field = control.find("input[name='close']");
               var notes_field = control.find("td.notes");
-              // will need to check if I've set this up correctly
                
 
-               $.getJSON(TIME_CALC_URL, {control_dist: control_dist, brevet_dist: brevet_dist, start_time: start_time}).done(
-                 function(data) {
-                    var times = data.result;
+               $.getJSON(TIME_CALC_URL, {control: control_dist, brevet: brevet_dist, start: start_time})
+               .done(function(times) {
+                    //var times = data.result;
                     console.log("Got a response: ");
                     console.log("Response.open = " + times.open);
                     // This part will automatically fill the open and close slots,
@@ -142,13 +142,13 @@
                     open_time_field.val(moment(times.open).format("YYYY-MM-DDTHH:mm"));
                     close_time_field.val(moment(times.close).format("YYYY-MM-DDTHH:mm"));
                     notes_field.text("");
-                    }
-               ).fail(function(err){
-                 // In case you get an error...
-                 notes_field.text("Something went wrong!")
-                 console.log("Error!");
-                 console.log(err);
-               });
+                  })
+                  .fail(function(err){
+                    // In case you get an error...
+                    notes_field.text("Something went wrong!")
+                    console.log("Error!");
+                    console.log(err);
+                  });
             }
 
             function reset(control) {
@@ -159,18 +159,23 @@
                   control.find("td.notes").text("");
                }
 
+            function calc_new_times() {
+                  $(".control_time_table .control").each(function() {
+                     if ($(this).find("input[name='km']").val().length !== 0) {
+                        calc_times($(this));
+                     }
+                  });
+            }
+
             $(document).ready(function(){
              // Do the following when the page is finished loading
-
-             // TODO: maybe need to check if tere is anything entered yet before calculating?
-            //     also need to keep calculating if a row changes probably. 
                $('input[name="miles"]').change(
-                  function() {
+                  function(self) {
                      if (self.target.value.length !== 0) {
                       var miles = parseFloat($(this).val());
-                      var km = (1.609344 * miles).toFixed(6) ;
+                      var km = (1.609344 * miles).toFixed(6);
                       console.log("Converted " + miles + " miles to " + km + " kilometers");
-                      var control_entry = $(this).parents(".control")
+                      var control_entry = $(this).parents(".control");
                       var target = control_entry.find("input[name='km']");
                       target.val( km );
                       // Then calculate times for this entry
@@ -186,7 +191,7 @@
                         var km = parseFloat($(this).val());
                         var miles = (0.621371 * km).toFixed(6) ;
                         console.log("Converted " + km + " km to " + miles + " miles");
-                        var control_entry = $(this).parents(".control")
+                        var control_entry = $(this).parents(".control");
                         var target = control_entry.find("input[name='miles']");
                         target.val( miles );
                         // Then calculate times for this entry
@@ -196,15 +201,9 @@
                         var control_entry = $(this).parents(".control");
                         reset(control_entry);
                      }
-               })
+               });
 
-               function calc_new_times() {
-                     $(".control_time_table .control").each(function() {
-                        if ($(this).find("input[name='km']").val().length !== 0) {
-                           calc_times($(this));
-                        }
-                     });
-                }
+
 
                $('select[name="distance"]').change(function() {
                   calc_new_times()
@@ -212,6 +211,7 @@
                $('input[name="begin_date"]').change(function() {
                   calc_new_times()
                });
+
             });
          </script>
       </div>
