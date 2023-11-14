@@ -2,4 +2,3 @@ arrow
 Flask
 nose
 pymongo
-python

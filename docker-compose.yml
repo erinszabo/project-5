@@ -1,7 +1,7 @@
 version: '3'
 
 services:
-    brevets:
+    brevetsapp:
         build: brevets/.
         command: python flask_brevets.py
         ports: 
