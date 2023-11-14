@@ -13,13 +13,7 @@ In this project, we take the brevet calculator created in project 4 and introduc
 
 ## Getting started
 
-With Docker running, use the following command:
-
-```
-docker compose up
-```
-
-Then navigate to your local host (port 5001). The calculator page should be up and running, this time with a `Submit` and `Display` button.
+Once the brevet calculator page is up and running, this time with a `Submit` and `Display` button.
 
 After selecting a brevet distance and entering some control times, click `Submit` to send this data to the brevet database using MongoDB. When the page is refreshed, the data is cleared. Click `Display` to display the most recent brevet information stored in the database.
 
