@@ -17,6 +17,9 @@ Write your tests HERE AND ONLY HERE.
 # no exception is thown, and calculation is based on total distance and not last distance
 
 
+# An automated nose test suite with at least 2 test cases:
+#  at least one for for DB insertion and one for retrieval.
+
 
 import nose    # Testing framework
 import logging
