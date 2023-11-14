@@ -1,51 +1,41 @@
 # UOCIS322 - Project 5 #
+
+## Erin Szabo
+#### Fall 2023
+### eszabo@uoregon.edu
+
 Brevet time calculator with MongoDB!
 
 ## Overview
 
-You'll add a storage to your previous project using MongoDB and `docker-compose`.
-As we discussed, `docker-compose` makes it easier to create, manage and connect multiple container to create a single service comprised of different sub-services.
+In this project, we take the brevet calculator created in project 4 and introduce database functionality using MongoDB.
 
-Presently, there's only a placeholder directory for your Flask app, and a `docker-compose` configuration file. You will copy over `brevets/` from your completed project 4, add a MongoDB service to docker-compose and your Flask app. You will also add two buttons named `Submit` and `Display` to the webpage. `Submit` must store the information (brevet distance, start time, checkpoints and their opening and closing times) in the database (overwriting existing ones). `Display` will fetch the information from the database and fill in the form with them.
 
-Recommended: Review [MongoDB README](MONGODB.md) and[Docker Compose README](COMPOSE.md).
+## Getting started
 
-## Tasks
+With Docker running, use the following command:
 
-1. Add two buttons `Submit` and `Display` in the ACP calculator page.
+```
+docker compose up
+```
 
-	- Upon clicking the `Submit` button, the control times should be inserted into a MongoDB database, and the form should be cleared (reset) **without** refreshing the page.
+Then navigate to your local host (port 5001). The calculator page should be up and running, this time with a `Submit` and `Display` button.
 
-	- Upon clicking the `Display` button, the entries from the database should be filled into the existing page.
+After selecting a brevet distance and entering some control times, click `Submit` to send this data to the brevet database using MongoDB. When the page is refreshed, the data is cleared. Click `Display` to display the most recent brevet information stored in the database.
 
-	- Handle error cases appropriately. For example, Submit should return an error if no control times are input. One can imagine many such cases: you'll come up with as many cases as possible.
+## Rules
+ - select a brevet distance: 200km, 300km, 400km, 600km, 1000km
 
-2. An automated `nose` test suite with at least 2 test cases: at least one for for DB insertion and one for retrieval.
+ - enter the distance from the starting point to the control location
 
-3. Update README.md with brevet control time calculation rules (you were supposed to do this for Project 4), and additional information regarding this project.
-	- This project will be peer-reviewed, so be thorough.
+  	- optionally enter the name of the control location
+		
+   - once a control distance is entered, the opening and closing times for this control location will be calculated and displayed		
+ 
+ - the final control location must be no further than 20% of the total selected brevet distance
 
-## Grading Rubric
+- the first control location may be "relaxed" if it is close enough to the starting point, meaning there will always be at least an hour before the first control location is closed
 
-* If your code works as expected: 100 points. This includes:
-	* Front-end implementation (`Submit` and `Display`).
-	
-	* Back-end implementation (Connecting to MongoDB, insertion and selection).
-	
-	* AJAX interaction between the frontend and backend (AJAX for `Submit` and `Display`).
-	
-	* Updating `README` with a clear specification (including details from Project 4).
-	
-	* Handling errors correctly.
-	
-	* Writing at least 2 correct tests using nose (put them in `tests`, follow Project 3 if necessary), and all should pass.
-
-* If DB operations do not work as expected (either submit fails to store information, or display fails to retrieve and show information correctly), 60 points will be docked.
-
-* If database-related tests are not found in `brevets/tests/`, or are incomplete, or do not pass, 20 points will be docked.
-
-* If docker does not build/run correctly, or the yaml file is not updated correctly, 5 will be assigned assuming README is updated.
-
-## Authors
+## Original Authors
 
 Michal Young, Ram Durairajan. Updated by Ali Hassani.
