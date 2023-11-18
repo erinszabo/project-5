@@ -3,12 +3,12 @@ version: '3'
 services:
     brevetsapp:
         build: brevets/.
-        command: python flask_brevets.py
+        command: flask_brevets.py
         ports: 
           - "5001:5000"
-        depends_on:
-            - brevetsdb
         environment:
             MONGODB_HOSTNAME: brevetsdb
     brevetsdb:
-        image: mongo:5.0.5
+        image: mongo:latest
+        depends_on:
+            - brevetsapp
