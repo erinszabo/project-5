@@ -5,15 +5,16 @@ Replacement for RUSA ACP brevet time calculator
 """
 
 import flask
-from flask import request
+#from flask import request
 import arrow  # Replacement for datetime, based on moment.js
 import acp_times  # Brevet time calculations
 import config
 
 import logging
 import os
+import pymongo
 
-from pymongo import MongoClient
+#from pymongo import MongoClient
 
 ###
 # Globals
@@ -22,10 +23,9 @@ from pymongo import MongoClient
 app = flask.Flask(__name__)
 CONFIG = config.configuration()
 
-client = MongoClient('mongodb://' + os.environ['MONGODB_HOSTNAME'], 27017)
+client = pymongo.MongoClient('mongodb://' + os.environ['MONGODB_HOSTNAME'], 27017)
 
 db = client.brevets
-
 collection = db.lists
 
 
@@ -49,7 +49,7 @@ def get_brevet():
 
 
 def submit_brevet(brevet, controls):
-
+    # maybe try using flask with this instead
     output = collection.insert_one({
         "brevet": brevet, # the length of the whole brevet
         "controls": controls}) # I think controls will also be a dictionary
@@ -63,16 +63,17 @@ def submit_brevet(brevet, controls):
 ##################################################
 
 ###
-# Pages
+# Buttons
 ###
 
-@app.route("/submit", methods=["POST"])
+# @app.route("/submit", methods=["POST"]) # < was this
+@app.post("/submit")
 def submit():
 
     try:
         # Read the entire request body as a JSON
         # This will fail if the request body is NOT a JSON.
-        input_json = request.json
+        input_json = flask.request.json
         # if successful, input_json is automatically parsed into a python dictionary!
         
         # Because input_json is a dictionary, we can do this:
@@ -95,8 +96,8 @@ def submit():
                         status=0, 
                         mongo_id='None')
 
-
-@app.route("/display")
+# @app.route("/display") # < was this
+@app.get("/display")
 def display():
 
     try:
@@ -112,7 +113,9 @@ def display():
                 message="Something went wrong, couldn't display brevets.")
 
 
-
+###
+# Pages
+###
 
 
 @app.route("/")
@@ -143,13 +146,13 @@ def _calc_times():
     """
     app.logger.debug("Got a JSON request")
 
-    control_dist = request.args.get('control', None, type=float)
-    start_time = request.args.get('start', None, type=arrow.get)
-    brevet_dist = request.args.get('brevet', None, type=int)
+    control_dist = flask.request.args.get('control', None, type=float)
+    start_time = flask.request.args.get('start', None, type=arrow.get)
+    brevet_dist = flask.request.args.get('brevet', None, type=int)
 
 
     app.logger.debug(f"control={control_dist}")
-    app.logger.debug(f"request.args: {request.args}")
+    app.logger.debug(f"request.args: {flask.request.args}")
 
     open_time = acp_times.open_time(control_dist, brevet_dist, start_time).format('YYYY-MM-DDTHH:mm')
     close_time = acp_times.close_time(control_dist, brevet_dist, start_time).format('YYYY-MM-DDTHH:mm')
