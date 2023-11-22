@@ -77,8 +77,8 @@
          <div class="row">
             <div class="col-md-12">
                <div class="col-md-6">
-                  <button id="sumbit">Submit</button>
-                  <button id="display">Display</button>
+                  <button type = "button" id="sumbit">Submit</button>
+                  <button type = "button" id="display">Display</button>
               </div>
                <table class="control_time_table">
                   <tr>
@@ -268,20 +268,21 @@
                         // Notice the difference between this and referencing by class (.)
                         // and referencing by id (#).
                         var brevet_dist = $("select[name='distance']").val();
+                        var start_time = $("input[name='begin_date']").val();
                         // ^ out here since it is not per row
 
                         var controls = [];
                         // For every row (go to line 52 and see ways to reference rows: by tag (tr) or
                         // by class (listitem). Class is better because it's more specific in this case.
                         // And we don't want to accidentally pick up the table header row.
-                        $('.control').each(function() {
+                        $('.control_time_table .control').each(function() {
                            // Find the row object
                            var control = $(this);
                            // In this row, find fields
                            var miles_dist = control.find("input[name='miles']").val();
                            var km_dist = control.find("input[name='km']").val();
                            //
-                           var start_time = $("input[name='begin_date']").val();
+                           
                            var open_time_field = control.find("input[name='open']");
                            var close_time_field = control.find("input[name='close']");
                            var notes_field = control.find("td.notes");
@@ -292,49 +293,51 @@
                                control_json = {
                                    "miles_dist": miles_dist, 
                                    "km_dist": km_dist, 
-                                   "start_time": start_time, 
+                                   //"start_time": start_time, 
                                    "open_time_field": open_time_field, 
                                    "close_time_field": close_time_field, 
                                    "notes_field": notes_field
                                }
                                // Push to list
-                               controls.push(control_json);
+                               controls.push(control_json); 
                            }
                         });
-                        // Construct the data we will be sending Flask
-                        var brevet = {
-                            "brevet_dist": title, 
-                            "controls": controls};
-                        // Perfect! Now we have all the information that the user's entered
-                        // into the form. All we have to do is send a POST request to have
-                        // the backend store it in the database!
-                        $.ajax({
-                          // Expect JSON responses from our backend
-                          dataType: 'json', // expected output format (getJSON sets this as well)
-                          // Specify we're sending JSON as well
-                          contentType: "application/json",
-                          // Request method: POST
-                          type: 'POST',
-                          // URL: specified above
-                          url: SAVE_URL,
-                          // Important step that we didn't use to do in P4:
-                          // Convert our constructed dictionary to a JSON string!
-                          data: JSON.stringify(brevet),
-                          // On a successful response from flask:
-                          success: function(data) {
-                              // Check the status code we set in Flask
-                              // Recall: 1 was success, 0 was failure
-                              if (data.status == 1) {
-                                  console.log("Successfully submitted! Response: ", data);
-                              }
-                              else {
-                                  console.log("Submission failed: ", data);
-                              }
-                           },
-                          // On error
-                          error: function(err){
-                           console.log("Error: ", err); }
-                        });
+                        if (controls.length !== 0) {
+                           // Construct the data we will be sending Flask
+                           var brevet = {
+                              brevet_dist: brevet_dist, 
+                              start_time: start_time,
+                              controls: controls};
+                           // Perfect! Now we have all the information that the user's entered
+                           // into the form. All we have to do is send a POST request to have
+                           // the backend store it in the database!
+                           $.ajax({
+                             // Expect JSON responses from our backend
+                             dataType: 'json', // expected output format (getJSON sets this as well)
+                             // Specify we're sending JSON as well
+                             contentType: "application/json",
+                             // Request method: POST
+                             type: "POST",
+                             // URL: specified above
+                             url: SAVE_URL,
+                             // Important step that we didn't use to do in P4:
+                             // Convert our constructed dictionary to a JSON string!
+                             data: JSON.stringify(brevet),
+                             // On a successful response from flask:
+                             success: function(data) {
+                               // Check the status code we set in Flask
+                               // Recall: 1 was success, 0 was failure
+                               if (data.status == 1) {
+                                   console.log("Successfully submitted! Response: ", data);
+                               }
+                               else {
+                                   console.log("Submission failed: ", data);
+                               }
+                             },                              // On error
+                             error: function(err){
+                             console.log("Error: ", err); }
+                           }); }
+                           // else rows are empty, do nothing
                     }
                 );
 
