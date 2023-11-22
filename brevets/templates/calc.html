@@ -220,7 +220,7 @@
                            function(data) {
                               console.log(data);
                               if (data.status == 1) {
-                                 console.log("Successfully displayed: ", data);
+                                 console.log("Successfully retrieved: ", data);
                                  var brevet_dist = $("select[name='distance']").val(data.result.brevet_dist);
                                  // ^ was input instead of select, but I think since it is a dropdown I want select here
                                  var controls = data.result.controls;
@@ -231,18 +231,19 @@
                                  console.log("Displayed: ", num_controls); 
 
                                  // For each row in the HTML table
-                                 $('.control').each(function(index) {
+                                 $('.control_time_table .control').each(function(index) {
                                     var control_row = $(this); // This is our row
                                     // Clear existing values
                                     reset(control_row);
 
                                     // Check if we're already done?
                                     if (index < num_controls) {
-                                       control_row.find("input[name='miles']").val(controls[index].miles_dist);
-                                       control_row.find("input[name='km']").val(controls[index].km_dist);
-                                       control_row.find("input[name='begin_date']").val(controls[index].start_time);
+                                       // adding change() to these to populate the page with the brevet vals 
+                                       // maybe only need to change the inputs and the outputs will just be recalculated
+                                       control_row.find("input[name='miles']").val(controls[index].miles_dist).change();
+                                       control_row.find("input[name='km']").val(controls[index].km_dist).change();
                                        control_row.find("input[name='open']").val(controls[index].open_time_field);
-                                       control_row.find("input[name='begin_date']").val(controls[index].start_time);
+                                       control_row.find("input[name='begin_date']").val(controls[index].start_time).change();
                                        control_row.find("input[name='close']").val(controls[index].close_time_field);
                                        control_row.find("input[name='td.notes']").val(controls[index].notes_field);
                                     }
