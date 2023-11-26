@@ -145,6 +145,11 @@
                     //var times = data.result;
                     console.log("Got a response: ");
                     console.log("Response.open = " + times.open);
+                    console.log("------------NEWEST VERSION-------");
+                    // ^ I am not seeing this so wondering if an old version is being 
+                    // built each time???
+
+
                     // This part will automatically fill the open and close slots,
                     // so don't worry about those.
                     open_time_field.val(moment(times.open).format("YYYY-MM-DDTHH:mm"));
@@ -221,12 +226,15 @@
                               console.log(data);
                               if (data.status == 1) {
                                  console.log("Successfully retrieved: ", data);
-                                 var brevet_dist = $("select[name='distance']").val(data.result.brevet_dist);
-                                 // ^ was input instead of select, but I think since it is a dropdown I want select here
-                                 var controls = data.result.controls;
+                                 
+                                 var brevet_dist = $("select[name='distance']").val(data.brevet_dist); // data.result.brevet_dist
+                                 var start_time = $("input[name='begin_date']").val(data.start_time);
+
+                                 var controls = data.controls; // data.result.controls
+                                 //var displayed_controls = 0;
                                  // 
                                  var num_controls = controls.length; 
-                                 var current_controls = $('.control').length;
+                                 //var current_controls = $('.control_time_table .control').length;
                                  console.log("Current Brevet: ", current_controls);
                                  console.log("Displayed: ", num_controls); 
 
@@ -234,18 +242,26 @@
                                  $('.control_time_table .control').each(function(index) {
                                     var control_row = $(this); // This is our row
                                     // Clear existing values
-                                    reset(control_row);
+                                    // reset(control_row);
 
                                     // Check if we're already done?
                                     if (index < num_controls) {
                                        // adding change() to these to populate the page with the brevet vals 
                                        // maybe only need to change the inputs and the outputs will just be recalculated
-                                       control_row.find("input[name='miles']").val(controls[index].miles_dist).change();
-                                       control_row.find("input[name='km']").val(controls[index].km_dist).change();
-                                       control_row.find("input[name='open']").val(controls[index].open_time_field);
-                                       control_row.find("input[name='begin_date']").val(controls[index].start_time).change();
-                                       control_row.find("input[name='close']").val(controls[index].close_time_field);
-                                       control_row.find("input[name='td.notes']").val(controls[index].notes_field);
+                                       var curr_control = data.controls[index];
+                                       var km_dist = Object.keys(curr_control[0]); //
+                                       var loc = Object.values(curr_control[0]); // location if they entered one
+                                       
+                                       control_row.find("input[name='miles']").val(km_dist).change();
+                                       control_row.find("input[name='location']").val(loc).change();
+                                       index ++;
+
+                                       // increment index if it is not done automatically
+
+                                       //control_row.find("input[name='open']").val(controls[index].open_time_field);
+                                       //control_row.find("input[name='begin_date']").val(controls[index].start_time).change();
+                                       //control_row.find("input[name='close']").val(controls[index].close_time_field);
+                                       //control_row.find("input[name='td.notes']").val(controls[index].notes_field);
                                     }
                                  });
 
@@ -262,8 +278,8 @@
                     }
                 );
 
-                $('#sumbit').click(
-                    function(event) {
+               $('#sumbit').click(
+                     function(event) {
                         event.preventDefault();
                         // Referencing by tag type (input) and attribute (name)
                         // Notice the difference between this and referencing by class (.)
@@ -287,6 +303,8 @@
                            var open_time_field = control.find("input[name='open']");
                            var close_time_field = control.find("input[name='close']");
                            var notes_field = control.find("td.notes");
+                           var loc = control.find("input[name='location']");
+
                            
                            // If not empty, append to our list.
                            if (control_dist) {
@@ -294,6 +312,7 @@
                                control_json = {
                                    "miles_dist": miles_dist, 
                                    "km_dist": km_dist, 
+                                   "loc": loc,
                                    //"start_time": start_time, 
                                    "open_time_field": open_time_field, 
                                    "close_time_field": close_time_field, 
