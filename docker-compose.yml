@@ -9,6 +9,6 @@ services:
         environment:
             MONGODB_HOSTNAME: brevetsdb
     brevetsdb:
-        image: mongo:latest
+        image: mongo:5.0.5
         depends_on:
             - brevetsapp

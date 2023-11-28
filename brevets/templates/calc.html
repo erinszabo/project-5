@@ -66,8 +66,14 @@
                <label>Begins at</label>
                <input type="datetime-local" name="begin_date" id="begin_date" value="2021-01-01T00:00" />
             </div>
+            <div class="col-md-6">
+               <button type="button" id="sumbit">Submit</button>
+               <button type="button" id="display">Display</button>
+           </div>
                <!-- columns 5 to 10 -->
          </div>
+         <!-- This is where the submitted (or not) message will display -->
+         <p id="message"></p>
          <!-- row -->
          <br />  <!-- a little vertical space -->
          <!-- Although we do not use tables for general page layout, they are
@@ -76,10 +82,7 @@
             -->
          <div class="row">
             <div class="col-md-12">
-               <div class="col-md-6">
-                  <button type = "button" id="sumbit">Submit</button>
-                  <button type = "button" id="display">Display</button>
-              </div>
+               
                <table class="control_time_table">
                   <tr>
                      <th> Miles </th>
@@ -180,6 +183,130 @@
                   });
             }
 
+            function submit_brevet(){
+               var start_time = $("input[name='begin_date']").val();
+               var controls = [];
+               var brevet_dist = $("select[name='distance']").val();
+
+               $('.control_time_table .control').each(function() {
+                  // In this row, find fields
+                  var miles_dist = $(this).find("input[name='miles']").val();
+                  var km_dist = $(this).find("input[name='km']").val();
+                  var loc = $(this).find("input[name='location']");
+                  
+                  // If not empty, append to our list.
+                  if (km_dist.length !== 0) {
+                     // Construct a dictionary
+                     control_json = {
+                         "miles_dist": miles_dist, // prob dont even need both measures
+                         "km_dist": km_dist, 
+                         "loc": loc,
+                     }
+                     // Push to list
+                     controls.push(control_json); 
+                  }
+               });
+
+               if (controls.length !== 0) {
+                  
+                  // Construct the data we will be sending Flask
+                  var brevet = {
+                     brevet_dist: brevet_dist, 
+                     start_time: start_time,
+                     controls: controls};
+
+                  // So I can show if the brevet have saved or not 
+                  var message = $("#message");
+                     
+                  $.ajax({
+                     // Expect JSON responses from our backend
+                     dataType: 'json',
+                     contentType: "application/json",
+                     type: "POST",
+                     url: SAVE_URL,
+                     data: JSON.stringify(brevet),
+
+                     // On a successful response from flask:
+                     success: function(data) {
+                        message.text("Brevet Saved.");
+                        console.log("Successfully submitted! Response: ", data);
+                     },
+                  })
+                  .fail(function(err) { // if I get rid of the if, I need a fail
+                     message.text("Brevet Failed to Save.");
+                     console.log("Error: ", err);
+                  });
+               } else {
+                  // else rows are empty, do nothing
+                  message.text("No Controls found to Submit.")
+               }
+               
+            }
+
+            function display_brevet(){
+               //
+               $.getJSON(GET_URL /* Send no data */).done(
+                  function(data) {
+                     console.log(data);
+                     if (data.status == 1) {
+                        console.log("Successfully retrieved: ", data);
+                        var brevet_dist = $("select[name='distance']").val(data.brevet_dist); // data.result.brevet_dist
+                        //var start_time = $("input[name='begin_date']").val(data.start_time);
+                        var start_time = $("input[name='begin_date']").val(moment(data.start_time).format("YYYY-MM-DDTHH:mm"));
+                        // ^ incase I need to format here?
+                        
+                        var controls = data.controls; // data.result.controls
+                        //var displayed_controls = 0;
+                        // 
+                        var total_contols = controls.length; 
+                        //var current_controls = $('.control_time_table .control').length;
+                        console.log("Current Brevet: ", current_controls);
+                        console.log("Total controls to display: ", total_contols);       
+                        // For each row in the HTML table
+                        //displayed = 0;
+                        $('.control_time_table .control').each(function(index) {
+                           var control_row = $(this); // This is our row
+                           // Clear existing values
+                           reset(control_row);
+
+                           // Check if we're already done?
+                           if (index < total_contols) {
+                              // adding change() to these to populate the page with the brevet vals 
+                              // maybe only need to change the inputs and the outputs will just be recalculated
+                              var curr_control = data.controls[index];
+                              var km_dist = curr_control.km_dist;//Object.keys(curr_control[0]); //
+                              //var miles_dist = curr_control.miles_dist;
+                              var loc = curr_control.loc;//Object.values(curr_control[0]); // location if they entered one
+                                       
+
+                              //control_row.find("input[name='miles']").val(km_dist).change();
+                              //control_row.find("input[name='location']").val(loc).change();
+                              
+                             // control_row.find("input[name='miles']").val(curr_control.miles_dist).change();
+                              $(this).find("input[name='km']").val(km_dist).change(); // change makes the row recalculate
+                              //$(this).find("input[name='miles']").val(miles_dist).change();
+                              $(this).find("input[name='location']").val(loc);
+                              //index ++;
+                               // increment index if it is not done automatically
+                           //control_row.find("input[name='open']").val(controls[index].open_time_field);
+                           //control_row.find("input[name='begin_date']").val(controls[index].start_time).change();
+                           //control_row.find("input[name='close']").val(controls[index].close_time_field);
+                           //control_row.find("input[name='td.notes']").val(controls[index].notes_field);
+                           }
+                        });
+                     } // end if
+
+                     else {
+                        console.log("Display failed: ", data);
+                     }
+                  }
+                  ).fail(function(err){
+                    // In case you get an error...
+                    console.log("Error: ", err);
+                  });
+            }
+
+
             $(document).ready(function(){
              // Do the following when the page is finished loading
                $('input[name="miles"]').change(
@@ -217,149 +344,76 @@
                });
 
                
-               $('#display').click(
-                     function(event) {
-                        event.preventDefault();
-
-                        $.getJSON(GET_URL /* Send no data */).done(
-                           function(data) {
-                              console.log(data);
-                              if (data.status == 1) {
-                                 console.log("Successfully retrieved: ", data);
-                                 
-                                 var brevet_dist = $("select[name='distance']").val(data.brevet_dist); // data.result.brevet_dist
-                                 var start_time = $("input[name='begin_date']").val(data.start_time);
-
-                                 var controls = data.controls; // data.result.controls
-                                 //var displayed_controls = 0;
-                                 // 
-                                 var num_controls = controls.length; 
-                                 //var current_controls = $('.control_time_table .control').length;
-                                 console.log("Current Brevet: ", current_controls);
-                                 console.log("Displayed: ", num_controls); 
-
-                                 // For each row in the HTML table
-                                 $('.control_time_table .control').each(function(index) {
-                                    var control_row = $(this); // This is our row
+               //$('#display').click(
+               //      function(event) {
+               //         event.preventDefault();
+//
+               //         $.getJSON(GET_URL /* Send no data */).done(
+               //            function(data) {
+               //               console.log(data);
+               //               if (data.status == 1) {
+               //                  console.log("Successfully retrieved: ", data);
+               //                  
+               //                  var brevet_dist = $("select[name='distance']").val(data.brevet_dist); // data.result.brevet_dist
+               //                  var start_time = $("input[name='begin_date']").val(data.start_time);
+//
+               //                  var controls = data.controls; // data.result.controls
+               //                  //var displayed_controls = 0;
+               //                  // 
+               //                  var num_controls = controls.length; 
+               //                  //var current_controls = $('.control_time_table .control').length;
+               //                  console.log("Current Brevet: ", current_controls);
+               //                  console.log("Displayed: ", num_controls); 
+//
+               //                  // For each row in the HTML table
+               //                  $('.control_time_table .control').each(function(index) {
+               //                     var control_row = $(this); // This is our row
                                     // Clear existing values
                                     // reset(control_row);
 
                                     // Check if we're already done?
-                                    if (index < num_controls) {
-                                       // adding change() to these to populate the page with the brevet vals 
-                                       // maybe only need to change the inputs and the outputs will just be recalculated
-                                       var curr_control = data.controls[index];
-                                       var km_dist = Object.keys(curr_control[0]); //
-                                       var loc = Object.values(curr_control[0]); // location if they entered one
-                                       
-                                       control_row.find("input[name='miles']").val(km_dist).change();
-                                       control_row.find("input[name='location']").val(loc).change();
-                                       index ++;
+                      //              if (index < num_controls) {
+                      //                 // adding change() to these to populate the page with the brevet vals 
+                      //                 // maybe only need to change the inputs and the outputs will just be recalculated
+                      //                 var curr_control = data.controls[index];
+                      //                 var km_dist = Object.keys(curr_control[0]); //
+                      //                 var loc = Object.values(curr_control[0]); // location if they entered one
+                      //                 
+                      //                 control_row.find("input[name='miles']").val(km_dist).change();
+                      //                 control_row.find("input[name='location']").val(loc).change();
+                      //                 index ++;
+//
+                      //                 // increment index if it is not done automatically
+//
+                      //                 //control_row.find("input[name='open']").val(controls[index].open_time_field);
+                      //                 //control_row.find("input[name='begin_date']").val(controls[index].start_time).change();
+                      //                 //control_row.find("input[name='close']").val(controls[index].close_time_field);
+                      //                 //control_row.find("input[name='td.notes']").val(controls[index].notes_field);
+                      //              }
+                      //           });
+//
+//
+                      //        }
+                      //        else {
+                      //           console.log("Display failed: ", data);
+                      //        }
+                      //     }
+                      //  ).fail(function(err){
+                      //    // In case you get an error...
+                      //    console.log("Error: ", err);
+                      //  });
+               //     }//
+               // );
 
-                                       // increment index if it is not done automatically
-
-                                       //control_row.find("input[name='open']").val(controls[index].open_time_field);
-                                       //control_row.find("input[name='begin_date']").val(controls[index].start_time).change();
-                                       //control_row.find("input[name='close']").val(controls[index].close_time_field);
-                                       //control_row.find("input[name='td.notes']").val(controls[index].notes_field);
-                                    }
-                                 });
-
-
-                              }
-                              else {
-                                 console.log("Display failed: ", data);
-                              }
-                           }
-                        ).fail(function(err){
-                          // In case you get an error...
-                          console.log("Error: ", err);
-                        });
-                    }
-                );
-
-               $('#sumbit').click(
-                     function(event) {
-                        event.preventDefault();
-                        // Referencing by tag type (input) and attribute (name)
-                        // Notice the difference between this and referencing by class (.)
-                        // and referencing by id (#).
-                        var brevet_dist = $("select[name='distance']").val();
-                        var start_time = $("input[name='begin_date']").val();
-                        // ^ out here since it is not per row
-
-                        var controls = [];
-                        // For every row (go to line 52 and see ways to reference rows: by tag (tr) or
-                        // by class (listitem). Class is better because it's more specific in this case.
-                        // And we don't want to accidentally pick up the table header row.
-                        $('.control_time_table .control').each(function() {
-                           // Find the row object
-                           var control = $(this);
-                           // In this row, find fields
-                           var miles_dist = control.find("input[name='miles']").val();
-                           var km_dist = control.find("input[name='km']").val();
-                           //
-                           
-                           var open_time_field = control.find("input[name='open']");
-                           var close_time_field = control.find("input[name='close']");
-                           var notes_field = control.find("td.notes");
-                           var loc = control.find("input[name='location']");
-
-                           
-                           // If not empty, append to our list.
-                           if (control_dist) {
-                               // Construct a dictionary
-                               control_json = {
-                                   "miles_dist": miles_dist, 
-                                   "km_dist": km_dist, 
-                                   "loc": loc,
-                                   //"start_time": start_time, 
-                                   "open_time_field": open_time_field, 
-                                   "close_time_field": close_time_field, 
-                                   "notes_field": notes_field
-                               }
-                               // Push to list
-                               controls.push(control_json); 
-                           }
-                        });
-                        if (controls.length !== 0) {
-                           // Construct the data we will be sending Flask
-                           var brevet = {
-                              brevet_dist: brevet_dist, 
-                              start_time: start_time,
-                              controls: controls};
-                           // Perfect! Now we have all the information that the user's entered
-                           // into the form. All we have to do is send a POST request to have
-                           // the backend store it in the database!
-                           $.ajax({
-                             // Expect JSON responses from our backend
-                             dataType: 'json', // expected output format (getJSON sets this as well)
-                             // Specify we're sending JSON as well
-                             contentType: "application/json",
-                             // Request method: POST
-                             type: "POST",
-                             // URL: specified above
-                             url: SAVE_URL,
-                             // Important step that we didn't use to do in P4:
-                             // Convert our constructed dictionary to a JSON string!
-                             data: JSON.stringify(brevet),
-                             // On a successful response from flask:
-                             success: function(data) {
-                               // Check the status code we set in Flask
-                               // Recall: 1 was success, 0 was failure
-                               if (data.status == 1) {
-                                   console.log("Successfully submitted! Response: ", data);
-                               }
-                               else {
-                                   console.log("Submission failed: ", data);
-                               }
-                             },                              // On error
-                             error: function(err){
-                             console.log("Error: ", err); }
-                           }); }
-                           // else rows are empty, do nothing
-                    }
-                );
+               //$('#sumbit').click(
+               //      function(event) {
+               //         event.preventDefault();
+               //         // Referencing by tag type (input) and attribute (name)
+               //         // Notice the difference between this and referencing by class (.)
+               //         // and referencing by id (#).
+               //         
+               //     }
+               //);
 
 
 
@@ -369,6 +423,15 @@
                });
                $('input[name="begin_date"]').change(function() {
                   calc_new_times()
+               });
+               
+               // maybe use functions here for submit and display too
+
+               $('#submit_brevet').on("click", function() {
+                  submit_brevet();
+               });
+               $('#display_brevet').on("click", function() {
+                  display_brevet();
                });
 
 
