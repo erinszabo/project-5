@@ -51,3 +51,7 @@ def test_0():
 # Writing at least 2 (more?) correct tests using nose
 #  (put them in tests, follow Project 3 if necessary), 
 # and all should pass.
+
+# test submitting a brevet
+
+# test displaying a brevet
