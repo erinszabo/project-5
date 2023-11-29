@@ -26,12 +26,15 @@ CONFIG = config.configuration()
 client = pymongo.MongoClient('mongodb://' + os.environ['MONGODB_HOSTNAME'], 27017)
 
 db = client.brevets
-collection = db.lists
+collection = db.collection 
 
 
 ##################################################
 ################ MongoDB Functions ############### 
 ##################################################
+"""
+These were not working for me so trying to do the work within the
+get/post flask routes below. Note: these were built to work with older code too
 
 def get_brevet():
 
@@ -56,62 +59,11 @@ def submit_brevet(brevet, controls):
     _id = output.inserted_id # this is how you obtain the primary key (_id) mongo assigns to your inserted document.
     
     return str(_id)
-
+"""
 
 ##################################################
 ################## Flask routes ################## 
 ##################################################
-
-###
-# Buttons
-###
-
-# @app.route("/submit", methods=["POST"]) # < was this
-@app.post("/submit")
-def submit():
-
-    try:
-        # Read the entire request body as a JSON
-        # This will fail if the request body is NOT a JSON.
-        input_json = flask.request.json
-        # if successful, input_json is automatically parsed into a python dictionary!
-        
-        # Because input_json is a dictionary, we can do this:
-        brevet = input_json["brevet"] # Should be a string
-        controls = input_json["controls"] # Should be a list of dictionaries
-
-        brevet_id = submit_brevet(brevet, controls)
-
-        return flask.jsonify(result={},
-                        message="Submitted!", 
-                        status=1, # This is defined by you. You just read this value in your javascript.
-                        mongo_id=brevet_id)
-    except:
-        # The reason for the try and except is to ensure Flask responds with a JSON.
-        # If Flask catches your error, it means you didn't catch it yourself,
-        # And Flask, by default, returns the error in an HTML.
-        # We want /insert to respond with a JSON no matter what!
-        return flask.jsonify(result={},
-                        message="Server error!", 
-                        status=0, 
-                        mongo_id='None')
-
-# @app.route("/display") # < was this
-@app.get("/display")
-def display():
-
-    try:
-        brevet, controls = get_brevet()
-        return flask.jsonify(
-                result={"brevet": brevet, "controls": controls}, 
-                status=1,
-                message="Successful Display.")
-    except:
-        return flask.jsonify(
-                result={}, 
-                status=0,
-                message="Something went wrong, couldn't display brevets.")
-
 
 ###
 # Pages
@@ -157,6 +109,52 @@ def _calc_times():
     open_time = acp_times.open_time(control_dist, brevet_dist, start_time).format('YYYY-MM-DDTHH:mm')
     close_time = acp_times.close_time(control_dist, brevet_dist, start_time).format('YYYY-MM-DDTHH:mm')
     return {"open": open_time, "close": close_time}
+
+
+###
+# Buttons
+###
+
+# trying a totally different way than the example
+
+@app.post('/submit')
+def submit():
+  try:
+    collection.controls.insert_one(flask.request.json)
+    return {"success": True}
+  
+  except:
+    message = "Unknown Error"
+    response = flask.jsonify({"error": message,
+                              "success": False})
+    return response
+
+
+@app.get('/display')
+def display():
+  try:
+    controls = collection.controls.find_one(
+        sort=[('_id', -1)], # -1 so I get the most recent brevet 
+        projection={"_id": 0} )
+        # after lots of googling I realized the issue was that it was including the id
+        # and found in this link how to make it exclude id
+        # https://stackoverflow.com/questions/48294613/mongo-find-function-wont-exc    
+        
+    if controls is not None:
+        # this is not working, for some reason controls is not None
+        # but there are no controls submitted?
+        return controls
+    else: 
+        message = "Zero brevets have been submitted."
+        return flask.jsonify({"error": message,
+                              "success": False})
+
+  except:
+    message = "Unknown Error." # server error I think but not sure
+    return flask.jsonify({"error": message,
+                          "success": False})
+
+
 
 #############
 

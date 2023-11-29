@@ -1,7 +1,7 @@
 version: '3'
 
 services:
-    brevetsapp:
+    brevets:
         build: brevets/.
         command: flask_brevets.py
         ports: 
@@ -11,4 +11,4 @@ services:
     brevetsdb:
         image: mongo:5.0.5
         depends_on:
-            - brevetsapp
+            - brevets

@@ -1,442 +1,279 @@
 <!doctype html>
 <html lang="en">
-   <head>
-      <title>ACP Controle Times</title>
-      <meta charset="utf-8">
-      <!-- 'viewport' is used by bootstrap to respond to device size -->
-      <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-      <!-- Bootstrap includes javascript and css  (must follow jquery) -->
-      <link
+    <head>
+        <title>ACP Controle Times</title>
+        <meta charset="utf-8">
+        <!-- 'viewport' is used by bootstrap to respond to device size -->
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <!-- Bootstrap includes javascript and css  (must follow jquery) -->
+        <link
          rel="stylesheet"
          href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css"
          integrity="sha384-B0vP5xmATw1+K9KRQjQERJvTumQW0nPEzvF6L/Z6nronJ3oUOFUFpCjEUQouq2+l"
          crossorigin="anonymous">
-      <!-- Javascript:  JQuery from a content distribution network (CDN) -->
-      <script
+        <!-- Javascript:  JQuery from a content distribution network (CDN) -->
+        <script
          src="https://code.jquery.com/jquery-3.5.1.min.js"
          integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="
          crossorigin="anonymous"></script>
-      <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"
+        <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"
          integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN"
          crossorigin="anonymous"></script>
-      <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.min.js"
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.min.js"
          integrity="sha384-+YQ4JLhjyBLPDQt//I+STsc9iw4uQqACwlvpslubQzn4u2UU2UFM80nGisd026JF"
          crossorigin="anonymous"></script>
-      <!-- moment.js is the JavaScript equivalent of arrow.py -->
-      <script
-      src="{{ url_for('static', filename="js/moment.min.js") }}"></script>
-   </head>
-   <!-- Our own stylesheet -->
-   <link rel="stylesheet" href="/static/css/calc.css" />
-   <body>
-      <div class="container">
-         <h1>ACP Brevet Times</h1>
-         <p>This worksheet is for ACP-sanctioned brevets between 200 and 1000 kilometers.</p>
-         <!--
-            If there are any warnings or other messages from a prior
-            request to the server,
-            they appear above the rest of the content, just until the next
-            action.  (This is only on request/response transactions that
-            result in regenerating the page, not on every request.)-->
-            
-         {% with messages = get_flashed_messages() %}
-         {% if messages %}
-         <ul class="flashes">
-            {% for message in messages %}
-            <li>{{ message }}</li>
-            {% endfor %}
-         </ul>
-         {% endif %}
-         {% endwith %}
-         
-         <!-- Design on bootstrap grid -->
-         <div class="row">
-            <div class="col-md-4">
-               <label>Distance</label>
-               <select name="distance" id="brevet_dist_km">
-                  <option value="200">200km</option>
-                  <option value="300">300km</option>
-                  <option value="400">400km</option>
-                  <option value="600">600km</option>
-                  <option value="1000">1000km</option>
-               </select>
+        <!-- moment.js is the JavaScript equivalent of arrow.py -->
+        <script src="{{ url_for('static', filename="js/moment.min.js") }}"></script>
+    </head>
+    <body>
+        <div class="container">
+            <h1>ACP Brevet Times</h1>
+            <p>This worksheet is for ACP-sanctioned brevets between 200 and 1000 kilometers.</p>
+            <!-- Design on bootstrap grid -->
+            <div class="row">
+                <div class="col-md-4">
+                    <label>Distance</label>
+                    <select name="distance" id="brevet_dist_km">
+                        <option value="200">200km</option>
+                        <option value="300">300km</option>
+                        <option value="400">400km</option>
+                        <option value="600">600km</option>
+                        <option value="1000">1000km</option>
+                    </select>
+                </div>
+                <!-- columns 1 to 4  -->
+                <div class="col-md-6">
+                    <label>Begins at</label>
+                    <input type="datetime-local" name="begin_date" id="begin_date" value="2021-01-01T00:00" />
+                </div>
+                <!-- columns 5 to 10 -->
+                <div>
+                    <button type="button" id="submit">Submit</button>
+                    <button type="button" id="display">Display</button>
+                </div>
             </div>
-            <!-- columns 1 to 4  -->
-            <div class="col-md-6">
-               <label>Begins at</label>
-               <input type="datetime-local" name="begin_date" id="begin_date" value="2021-01-01T00:00" />
+            <p id="message"></p>
+            <!-- row -->
+            <br />  <!-- a little vertical space -->
+            <!-- Although we do not use tables for general page layout, they are
+                appropriate for something that really is a table, like this
+                one.  We allocate it the full 12 columns of the bootstrap grid.
+                -->
+            <div class="row">
+                <div class="col-md-12">
+                    <table class="control_time_table">
+                        <tr>
+                            <th>Miles</th>
+                            <th>Km</th>
+                            <th>Location</th>
+                            <th>Open</th>
+                            <th>Close</th>
+                            <th>Notes</th>
+                        </tr>
+                        {% for row in range(20) %}
+                        <tr class="control">
+                        <!-- Dist (mi) -->
+                        <td><input name="miles" type="number" step="0.00001"
+                            min="0" max="745" /></td>
+                        <!-- Dist (km) -->
+                        <td><input name="km" type="number" step="0.00001"
+                            min="0" max="1200" /></td>
+                        <!-- Location (optional) -->
+                        <td><input name="location" type="text"
+                            placeholder="Optional location name"
+                            size="20" /></td>
+                        <!-- Open time (read only, set by JavaScript function -->
+                        <td><input name="open" type="datetime-local" readonly value="" /></td>
+                        <!-- Close time (read only, set by JavaScript function -->
+                        <td><input name="close" type="datetime-local" readonly value="" /></td>
+                        <!-- Notes (error messages for this row) -->
+                        <td class="notes">&nbsp;</td>
+                        </tr>
+                        {% endfor %}
+                    </table>
+                </div>
+               <!-- col -->
             </div>
-            <div class="col-md-6">
-               <button type="button" id="sumbit">Submit</button>
-               <button type="button" id="display">Display</button>
-           </div>
-               <!-- columns 5 to 10 -->
-         </div>
-         <!-- This is where the submitted (or not) message will display -->
-         <p id="message"></p>
-         <!-- row -->
-         <br />  <!-- a little vertical space -->
-         <!-- Although we do not use tables for general page layout, they are
-            appropriate for something that really is a table, like this
-            one.  We allocate it the full 12 columns of the bootstrap grid.
-            -->
-         <div class="row">
-            <div class="col-md-12">
-               
-               <table class="control_time_table">
-                  <tr>
-                     <th> Miles </th>
-                     <th> Km </th>
-                     <th>Location</th>
-                     <th>Open</th>
-                     <th>Close</th>
-                     <th>Notes</th>
-                  </tr>
-                  {% for row in range(20) %}
-                  <tr class="control">
-                     <!-- Dist (mi) -->
-                     <td><input name="miles" type="number" step="0.00001"
-                        min="0" max="900" /></td>
-                     <!-- Dist (km) -->
-                     <td><input name="km" type="number" step="0.00001"
-                        min="0" max="1100" /> </td>
-                     <!-- Location (optional) -->
-                     <td><input name="location" type="text"
-                        placeholder="Optional location name"
-                        size="20" /> </td>
-                     <!-- Open time (read only, set by JavaScript function -->
-                     <td><input name="open" type="datetime-local" readonly value="" /></td>
-                     <!-- Close time (read only, set by JavaScript function -->
-                     <td><input name="close" type="datetime-local" readonly value="" /></td>
-                     <!-- Notes (error messages for this row) -->
-                     <td class="notes"> &nbsp; </td>
-                  </tr>
-                  {% endfor %}
-               </table>
-            </div>
-            <!-- col -->
-         </div>
-         <!-- row -->
-         <script type="text/javascript">
-            var SCRIPT_ROOT = {{ request.script_root|tojson|safe }} ;
-            var TIME_CALC_URL = SCRIPT_ROOT + "/_calc_times";
-            ////////////////new/////////
-            var GET_URL = SCRIPT_ROOT + "/display";
-            var SAVE_URL = SCRIPT_ROOT + "/submit";
-            ////////////////new/////////
+            <!-- row -->
+            <script type="text/javascript">
+                const SCRIPT_ROOT = {{ request.script_root|tojson|safe }} ;
+                const TIME_CALC_URL = SCRIPT_ROOT + "/_calc_times";
 
-            function reset(control) {
-               control.find("input[name='km']").val("");
-               control.find("input[name='miles']").val("");
-               control.find("input[name='open']").val("");
-               control.find("input[name='close']").val("");
-               control.find("td.notes").text("");
-            }
+                function reset(control) {
+                    control.find("input[name='km']").val("");
+                    control.find("input[name='miles']").val("");
+                    control.find("input[name='open']").val("");
+                    control.find("input[name='close']").val("");
+                    control.find("td.notes").text("");
+                }
 
-            function calc_times(control) {
-              var control_dist = control.find("input[name='km']").val();
-              var brevet_dist = $("select[name='distance']").val();
-              var start_time = $("input[name='begin_date']").val();
+                function calc_times(control) {
+                    var control_dist = control.find("input[name='km']").val();
+                    var brevet_dist = $("select[name='distance']").val();
+                    var start_time = $("input[name='begin_date']").val();
 
-              var open_time_field = control.find("input[name='open']");
-              var close_time_field = control.find("input[name='close']");
-              var notes_field = control.find("td.notes");
+                    var open_time_field = control.find("input[name='open']");
+                    var close_time_field = control.find("input[name='close']");
+                    var notes_field = control.find("td.notes");
                
 
-               $.getJSON(TIME_CALC_URL, {control: control_dist, brevet: brevet_dist, start: start_time})
-               .done(function(times) {
-                    //var times = data.result;
-                    console.log("Got a response: ");
-                    console.log("Response.open = " + times.open);
-                    console.log("------------NEWEST VERSION-------");
-                    // ^ I am not seeing this so wondering if an old version is being 
-                    // built each time???
+                    $.getJSON(TIME_CALC_URL, {control: control_dist, brevet: brevet_dist, start: start_time})
+                    .done(function(times) {
+                        //var times = data.result;
+                        console.log("Got a response: ");
+                        console.log("Response.open = " + times.open);
 
+                        // This part will automatically fill the open and close slots,
+                        // so don't worry about those.
+                        open_time_field.val(moment(times.open).format("YYYY-MM-DDTHH:mm"));
+                        close_time_field.val(moment(times.close).format("YYYY-MM-DDTHH:mm"));
+                        notes_field.text("");
+                      })
+                      .fail(function(err){
+                        // In case you get an error...
+                        notes_field.text("Something went wrong!")
+                        console.log("Error!");
+                        console.log(err);
+                      });
+                }
 
-                    // This part will automatically fill the open and close slots,
-                    // so don't worry about those.
-                    open_time_field.val(moment(times.open).format("YYYY-MM-DDTHH:mm"));
-                    close_time_field.val(moment(times.close).format("YYYY-MM-DDTHH:mm"));
-                    notes_field.text("");
-                  })
-                  .fail(function(err){
-                    // In case you get an error...
-                    notes_field.text("Something went wrong!")
-                    console.log("Error!");
-                    console.log(err);
-                  });
-            }
+                function calc_new_times() {
+                    $(".control_time_table .control").each(function() {
+                        if ($(this).find("input[name='km']").val().length !== 0) {
+                            calc_times($(this));
+                        }
+                    });
+                }
 
-            function reset(control) {
-                  control.find("input[name='km']").val("");
-                  control.find("input[name='miles']").val("");
-                  control.find("input[name='open']").val("");
-                  control.find("input[name='close']").val("");
-                  control.find("td.notes").text("");
-               }
+                // complete and funtional
+                function submit_brevet() {
+                    var mess = $("#message");
+                    // so user/dev can tell if it worked or what is wrong easily
+                    
+                    var start_time = $("input[name='begin_date']").val();
+                    var brevet_dist = $("select[name='distance']").val();
+                    var controls = [];
 
-            function calc_new_times() {
-                  $(".control_time_table .control").each(function() {
-                     if ($(this).find("input[name='km']").val().length !== 0) {
-                        calc_times($(this));
-                     }
-                  });
-            }
-
-            function submit_brevet(){
-               var start_time = $("input[name='begin_date']").val();
-               var controls = [];
-               var brevet_dist = $("select[name='distance']").val();
-
-               $('.control_time_table .control').each(function() {
-                  // In this row, find fields
-                  var miles_dist = $(this).find("input[name='miles']").val();
-                  var km_dist = $(this).find("input[name='km']").val();
-                  var loc = $(this).find("input[name='location']");
-                  
-                  // If not empty, append to our list.
-                  if (km_dist.length !== 0) {
-                     // Construct a dictionary
-                     control_json = {
-                         "miles_dist": miles_dist, // prob dont even need both measures
-                         "km_dist": km_dist, 
-                         "loc": loc,
-                     }
-                     // Push to list
-                     controls.push(control_json); 
-                  }
-               });
-
-               if (controls.length !== 0) {
-                  
-                  // Construct the data we will be sending Flask
-                  var brevet = {
-                     brevet_dist: brevet_dist, 
-                     start_time: start_time,
-                     controls: controls};
-
-                  // So I can show if the brevet have saved or not 
-                  var message = $("#message");
-                     
-                  $.ajax({
-                     // Expect JSON responses from our backend
-                     dataType: 'json',
-                     contentType: "application/json",
-                     type: "POST",
-                     url: SAVE_URL,
-                     data: JSON.stringify(brevet),
-
-                     // On a successful response from flask:
-                     success: function(data) {
-                        message.text("Brevet Saved.");
-                        console.log("Successfully submitted! Response: ", data);
-                     },
-                  })
-                  .fail(function(err) { // if I get rid of the if, I need a fail
-                     message.text("Brevet Failed to Save.");
-                     console.log("Error: ", err);
-                  });
-               } else {
-                  // else rows are empty, do nothing
-                  message.text("No Controls found to Submit.")
-               }
-               
-            }
-
-            function display_brevet(){
-               //
-               $.getJSON(GET_URL /* Send no data */).done(
-                  function(data) {
-                     console.log(data);
-                     if (data.status == 1) {
-                        console.log("Successfully retrieved: ", data);
-                        var brevet_dist = $("select[name='distance']").val(data.brevet_dist); // data.result.brevet_dist
-                        //var start_time = $("input[name='begin_date']").val(data.start_time);
-                        var start_time = $("input[name='begin_date']").val(moment(data.start_time).format("YYYY-MM-DDTHH:mm"));
-                        // ^ incase I need to format here?
+                    $(".control_time_table .control").each(function() {
+                        // In this row, find fields
+                        var km_dist = $(this).find("input[name='km']").val();
+                        // I really only need one measure of length and location if it is given
                         
-                        var controls = data.controls; // data.result.controls
-                        //var displayed_controls = 0;
-                        // 
-                        var total_contols = controls.length; 
-                        //var current_controls = $('.control_time_table .control').length;
-                        console.log("Current Brevet: ", current_controls);
-                        console.log("Total controls to display: ", total_contols);       
-                        // For each row in the HTML table
-                        //displayed = 0;
-                        $('.control_time_table .control').each(function(index) {
-                           var control_row = $(this); // This is our row
-                           // Clear existing values
-                           reset(control_row);
-
-                           // Check if we're already done?
-                           if (index < total_contols) {
-                              // adding change() to these to populate the page with the brevet vals 
-                              // maybe only need to change the inputs and the outputs will just be recalculated
-                              var curr_control = data.controls[index];
-                              var km_dist = curr_control.km_dist;//Object.keys(curr_control[0]); //
-                              //var miles_dist = curr_control.miles_dist;
-                              var loc = curr_control.loc;//Object.values(curr_control[0]); // location if they entered one
-                                       
-
-                              //control_row.find("input[name='miles']").val(km_dist).change();
-                              //control_row.find("input[name='location']").val(loc).change();
-                              
-                             // control_row.find("input[name='miles']").val(curr_control.miles_dist).change();
-                              $(this).find("input[name='km']").val(km_dist).change(); // change makes the row recalculate
-                              //$(this).find("input[name='miles']").val(miles_dist).change();
-                              $(this).find("input[name='location']").val(loc);
-                              //index ++;
-                               // increment index if it is not done automatically
-                           //control_row.find("input[name='open']").val(controls[index].open_time_field);
-                           //control_row.find("input[name='begin_date']").val(controls[index].start_time).change();
-                           //control_row.find("input[name='close']").val(controls[index].close_time_field);
-                           //control_row.find("input[name='td.notes']").val(controls[index].notes_field);
-                           }
+                        // if there is a control in this row, push it to controls
+                        if (km_dist.length !== 0) {
+                            var location = $(this).find("input[name='location']").val();
+                            controls.push({[km_dist]: location});
+                        }
+                    });
+                    // if there are any controls, add them to the db
+                    if (controls.length !== 0) {
+                        $.ajax({
+                            type: "POST",
+                            url: "/submit", // it seemed like the saved constant wasn't working so I hardcoded it here
+                            // for some reason I think it didn't like me defining this brevet outside of the ajax
+                            data: JSON.stringify({
+                                brevet_dist: brevet_dist,
+                                start_time: start_time,
+                                controls: controls
+                            }),
+                            // On a successful response from flask:
+                            success: function() { 
+                                mess.text("Brevet Saved.");
+                            },
+                            contentType: "application/json",
+                            dataType: 'json'
+                        })
+                        .fail(function() {
+                            mess.text("Brevet Failed to Save.");
+                            
                         });
-                     } // end if
+                    } else {
+                        // else rows are empty, do nothing
+                        mess.text("No Controls found to Submit.");
+                    }
+                }
 
-                     else {
-                        console.log("Display failed: ", data);
-                     }
-                  }
-                  ).fail(function(err){
-                    // In case you get an error...
-                    console.log("Error: ", err);
-                  });
-            }
+                // complete and funtional
+                function display_brevet() {
+                    let mess = $("#message");
+                    $.getJSON("/display")
+                        .done(function(data) {
+                            $("select[name='distance']").val(data.brevet_dist);
+                            $("input[name='begin_date']").val(moment(data.start_time).format("YYYY-MM-DDTHH:mm"));
 
+                            // this is more readable to me than comparing to index
+                            var displayed_controls = 0;
+                            $(".control_time_table .control").each(function() {
+                                // if we have displayed all controls, we are done
+                                if (displayed_controls >= data.controls.length) {
+                                    return false;  
+                                }
+                                // otherwise
+                                var curr_control = data.controls[displayed_controls];
+                                var km_dist = Object.keys(curr_control)[0];
+                                var location = Object.values(curr_control)[0];
+                                $(this).find("input[name='km']").val(km_dist).change(); 
+                                $(this).find("input[name='location']").val(location);   
+                                displayed_controls++;
+                            });
+                            // maybe rephrase this
+                            mess.text("Most recently submitted brevet:");  
+                        })
+                        .fail(function() {
+                            mess.text("Brevet Failed to Display.");
+                        });
+                }
 
-            $(document).ready(function(){
-             // Do the following when the page is finished loading
-               $('input[name="miles"]').change(
-                  function(self) {
-                     if (self.target.value.length !== 0) {
-                      var miles = parseFloat($(this).val());
-                      var km = (1.609344 * miles).toFixed(6);
-                      console.log("Converted " + miles + " miles to " + km + " kilometers");
-                      var control_entry = $(this).parents(".control");
-                      var target = control_entry.find("input[name='km']");
-                      target.val( km );
-                      // Then calculate times for this entry
-                      calc_times(control_entry);
-                     }
-                     else {
-                        var control_entry = $(this).parents(".control");
-                        reset(control_entry);                     }
-                   });
-               $('input[name="km"]').change(
-                  function(self) {
-                     if (self.target.value.length !== 0) {
-                        var km = parseFloat($(this).val());
-                        var miles = (0.621371 * km).toFixed(6) ;
-                        console.log("Converted " + km + " km to " + miles + " miles");
-                        var control_entry = $(this).parents(".control");
-                        var target = control_entry.find("input[name='miles']");
-                        target.val( miles );
-                        // Then calculate times for this entry
-                        calc_times(control_entry);
-                     }
-                     else {
-                        var control_entry = $(this).parents(".control");
-                        reset(control_entry);
-                     }
-               });
+                $(document).ready(function() {
+                    // Do the following when the page is finished loading
 
-               
-               //$('#display').click(
-               //      function(event) {
-               //         event.preventDefault();
-//
-               //         $.getJSON(GET_URL /* Send no data */).done(
-               //            function(data) {
-               //               console.log(data);
-               //               if (data.status == 1) {
-               //                  console.log("Successfully retrieved: ", data);
-               //                  
-               //                  var brevet_dist = $("select[name='distance']").val(data.brevet_dist); // data.result.brevet_dist
-               //                  var start_time = $("input[name='begin_date']").val(data.start_time);
-//
-               //                  var controls = data.controls; // data.result.controls
-               //                  //var displayed_controls = 0;
-               //                  // 
-               //                  var num_controls = controls.length; 
-               //                  //var current_controls = $('.control_time_table .control').length;
-               //                  console.log("Current Brevet: ", current_controls);
-               //                  console.log("Displayed: ", num_controls); 
-//
-               //                  // For each row in the HTML table
-               //                  $('.control_time_table .control').each(function(index) {
-               //                     var control_row = $(this); // This is our row
-                                    // Clear existing values
-                                    // reset(control_row);
+                    $('input[name="miles"]').change(function(e) {
+                        if (e.target.value.length !== 0) {
+                            let miles = parseFloat($(this).val());
+                            let km = (1.609344 * miles).toFixed(6);
+                            console.log("Converted " + miles + " miles to " + km + " kilometers");
+                            let control_entry = $(this).parents(".control")
+                            let target = control_entry.find("input[name='km']");
+                            target.val(km);
+                            // Then calculate times for this entry
+                            calc_times(control_entry);
+                        } else {
+                            let control_entry = $(this).parents(".control");
+                            reset(control_entry);
+                        }
+                    });
 
-                                    // Check if we're already done?
-                      //              if (index < num_controls) {
-                      //                 // adding change() to these to populate the page with the brevet vals 
-                      //                 // maybe only need to change the inputs and the outputs will just be recalculated
-                      //                 var curr_control = data.controls[index];
-                      //                 var km_dist = Object.keys(curr_control[0]); //
-                      //                 var loc = Object.values(curr_control[0]); // location if they entered one
-                      //                 
-                      //                 control_row.find("input[name='miles']").val(km_dist).change();
-                      //                 control_row.find("input[name='location']").val(loc).change();
-                      //                 index ++;
-//
-                      //                 // increment index if it is not done automatically
-//
-                      //                 //control_row.find("input[name='open']").val(controls[index].open_time_field);
-                      //                 //control_row.find("input[name='begin_date']").val(controls[index].start_time).change();
-                      //                 //control_row.find("input[name='close']").val(controls[index].close_time_field);
-                      //                 //control_row.find("input[name='td.notes']").val(controls[index].notes_field);
-                      //              }
-                      //           });
-//
-//
-                      //        }
-                      //        else {
-                      //           console.log("Display failed: ", data);
-                      //        }
-                      //     }
-                      //  ).fail(function(err){
-                      //    // In case you get an error...
-                      //    console.log("Error: ", err);
-                      //  });
-               //     }//
-               // );
+                    $('input[name="km"]').change(function(e) {
+                        if (e.target.value.length !== 0) {
+                            let km = parseFloat($(this).val());
+                            let miles = (0.621371 * km).toFixed(6);
+                            console.log("Converted " + km + " km to " + miles + " miles");
+                            let control_entry = $(this).parents(".control")
+                            let target = control_entry.find("input[name='miles']");
+                            target.val(miles);
+                            // Then calculate times for this entry
+                            calc_times(control_entry);
+                        } else {
+                            let control_entry = $(this).parents(".control");
+                            reset(control_entry);
+                        }
+                    });
 
-               //$('#sumbit').click(
-               //      function(event) {
-               //         event.preventDefault();
-               //         // Referencing by tag type (input) and attribute (name)
-               //         // Notice the difference between this and referencing by class (.)
-               //         // and referencing by id (#).
-               //         
-               //     }
-               //);
+                    $('select[name="distance"]').change(function() {
+                        calc_new_times();
+                    });
+                    $('input[name="begin_date"]').change(function() {
+                        calc_new_times();
+                    });
 
-
-
-
-               $('select[name="distance"]').change(function() {
-                  calc_new_times()
-               });
-               $('input[name="begin_date"]').change(function() {
-                  calc_new_times()
-               });
-               
-               // maybe use functions here for submit and display too
-
-               $('#submit_brevet').on("click", function() {
-                  submit_brevet();
-               });
-               $('#display_brevet').on("click", function() {
-                  display_brevet();
-               });
-
-
-            });
-         </script>
-      </div>
-   </body>
+                    $('#submit').on("click", function() {
+                        submit_brevet();
+                    });
+                    $('#display').on("click", function() {
+                        display_brevet();
+                    });
+                });
+            </script>
+        </div>
+    </body>
 </html>
